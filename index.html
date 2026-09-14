@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALGOVERSE - Skill Path: Pass the Technical Interview with Python & C++</title>
+  <meta name="description" content="Learn data structures and algorithms from scratch in Codecademy interactive format. Climb AtCoder and crack Amazon & Microsoft interviews.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="codemirror/codemirror.min.css">
+  <link rel="stylesheet" href="codemirror/material-darker.min.css">
+  <script src="marked.min.js"></script>
+  <script src="codemirror/codemirror.min.js"></script>
+  <script src="codemirror/python.min.js"></script>
+  <script src="codemirror/clike.min.js"></script>
+  <script src="codemirror/closebrackets.min.js"></script>
+  <script src="codemirror/matchbrackets.min.js"></script>
+</head>
+<body class="cc-light-theme">
+  <div id="app">
+    <!-- Top Codecademy Header (Screenshot 1) -->
+    <header class="cc-header">
+      <div class="cc-header-left">
+        <div class="cc-logo-badge" id="btn-home-logo" title="Course Home">C_</div>
+        <div class="cc-module-nav-wrapper">
+          <button class="cc-lesson-title-btn" id="btn-toggle-syllabus" title="Open Syllabus Browser">
+            <span id="cc-header-module-title">Algorithmic Thinking</span>
+            <span class="cc-header-menu-icon">☰</span>
+          </button>
+          <div class="cc-progress-dashes" id="cc-header-dashes">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <div class="cc-header-right">
+        <button class="btn-ai-assistant" id="btn-open-ai">
+          <span style="color: #60a5fa;">✦</span>
+          <span>Ask the AI Learning Assistant</span>
+        </button>
+        <button class="cc-header-link" id="btn-get-unstuck">
+          <span style="color: #10b981; margin-right: 5px; font-size: 8px;">●</span>
+          <span>Get Unstuck</span>
+        </button>
+        <button class="cc-header-link" id="btn-toggle-tools">Tools</button>
+        <div class="cc-avatar-circle" title="User Profile">
+          <span style="font-size: 11px; font-weight: 700; color: #fff;">RP</span>
+        </div>
+        <button class="btn-cc-upgrade" id="btn-upgrade-plan">Upgrade plan</button>
+        <span class="cc-xp-pill" id="cc-xp-display">50 XP</span>
+      </div>
+    </header>
+
+    <!-- Codecademy Syllabus Browser Drawer (Screenshots 2, 3, 4) -->
+    <div class="cc-drawer-overlay" id="cc-drawer-overlay"></div>
+    <aside class="cc-drawer" id="cc-syllabus-drawer">
+      <div class="cc-drawer-header">
+        <button class="cc-drawer-back-btn" id="btn-drawer-back">
+          <span>‹</span>
+          <span id="drawer-back-label">All Modules</span>
+        </button>
+        <button class="cc-drawer-close-btn" id="btn-close-drawer" title="Close Syllabus Browser">✕</button>
+      </div>
+
+      <div class="cc-drawer-content" id="cc-drawer-body">
+        <!-- Dynamically rendered (All Modules or Module Details) -->
+      </div>
+
+      <div class="cc-drawer-footer">
+        <button class="btn-view-syllabus-page" id="btn-view-full-roadmap">View syllabus page</button>
+      </div>
+    </aside>
+
+    <!-- Main 3-Pane Interactive Learning Workspace (Screenshot 1) -->
+    <main class="cc-workspace" id="view-workspace">
+      <!-- Pane 1: Learn (Pure Crisp Editorial White) -->
+      <section class="cc-pane-learn">
+        <div class="cc-pane-header">
+          <span class="cc-learn-icon">📖</span>
+          <span>Learn</span>
+        </div>
+        <div class="cc-learn-body">
+          <div class="cc-learn-category" id="cc-learn-category">FOUNDATIONS</div>
+          <h1 class="cc-learn-title" id="cc-learn-title">Welcome to the Algorithmic Engine</h1>
+          <div class="cc-learn-time" id="cc-learn-time">3 min</div>
+          <div class="cc-learn-text" id="cc-learn-body"></div>
+
+          <!-- Instructions & Exercises Section -->
+          <div class="cc-instructions-box">
+            <div class="cc-instructions-header">
+              <h3 class="cc-instructions-title">Instructions</h3>
+              <span class="cc-instructions-pill">Checkpoints</span>
+            </div>
+            <div id="cc-tasks-container">
+              <!-- Checkpoint tasks populated by JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pane 2: Code Editor (Dark Slate Navy) -->
+      <section class="cc-pane-editor">
+        <div class="cc-editor-tabbar">
+          <div class="cc-file-tab active" id="tab-lang-py">
+            <span class="cc-tab-close">✕</span>
+            <span id="cc-editor-filename">script.py</span>
+          </div>
+          <div class="cc-file-tab" id="tab-lang-cpp">
+            <span class="cc-tab-close">✕</span>
+            <span>solution.cpp</span>
+          </div>
+          <div style="flex: 1;"></div>
+          <button class="btn-icon" id="btn-editor-expand" title="Expand Editor">⤢</button>
+        </div>
+        <div class="cc-editor-body" id="editor-container">
+          <textarea id="cc-code-input" spellcheck="false"></textarea>
+        </div>
+        <div class="cc-editor-footer">
+          <button class="btn-cc-run" id="btn-cc-run">
+            <span>Run</span>
+          </button>
+          <div class="cc-editor-actions">
+            <button class="btn-icon" id="btn-copy-code" title="Copy Code">📋</button>
+            <button class="btn-icon" id="btn-reset-code" title="Reset Starter Code">↻</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pane 3: Terminal Output (Pure Pitch Black) -->
+      <section class="cc-pane-terminal">
+        <div class="cc-terminal-header">
+          <div class="cc-terminal-dots">
+            <span class="cc-term-dot dot-red"></span>
+            <span class="cc-term-dot dot-yellow"></span>
+            <span class="cc-term-dot dot-green"></span>
+          </div>
+          <span class="cc-term-title">bash - 80x24 (Python 3.11)</span>
+          <button class="btn-icon cc-term-clear" id="btn-clear-term" title="Clear Terminal">Clear</button>
+        </div>
+        <div class="cc-terminal-body" id="cc-terminal-body">
+          <div class="term-line term-dim">ALGOVERSE Interactive Judge Terminal (Python 3.11)</div>
+          <div class="term-line term-dim">Loaded: script.py</div>
+          <div class="term-line term-dim">Click 'Run' or press Ctrl+Enter to execute.</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Navigation Footer (Screenshot 1) -->
+    <footer class="cc-footer-bar" id="cc-footer-bar">
+      <div class="cc-footer-left"></div>
+      <div class="cc-step-counter" id="cc-step-counter">1/8</div>
+      <div class="cc-footer-actions">
+        <button class="btn-cc-back" id="btn-step-back">Back</button>
+        <button class="btn-cc-next" id="btn-step-next">Next</button>
+      </div>
+    </footer>
+
+    <!-- Full Course Overview Dashboard (When clicking Course Home / Full Roadmap) -->
+    <main class="page-container" id="view-dashboard" style="display: none;">
+      <div class="hero-card">
+        <div class="hero-tag">Skill Path Specification</div>
+        <h1 class="hero-title">Pass the Competitive Programming & Technical Interview with Python & C++</h1>
+        <p class="hero-desc">
+          Learn data structures and algorithms from scratch in Codecademy interactive format.
+          Master AtCoder contests and Amazon/Microsoft hiring loops.
+        </p>
+        <div class="stats-grid">
+          <div class="stat-item"><span class="stat-value">10</span><span class="stat-label">Modules</span></div>
+          <div class="stat-item"><span class="stat-value">45</span><span class="stat-label">Lessons</span></div>
+          <div class="stat-item"><span class="stat-value">8</span><span class="stat-label">Projects</span></div>
+          <div class="stat-item"><span class="stat-value">40</span><span class="stat-label">Quizzes</span></div>
+          <div class="stat-item"><span class="stat-value">162+</span><span class="stat-label">Qiita Articles</span></div>
+          <div class="stat-item"><span class="stat-value">34,820</span><span class="stat-label">Learners</span></div>
+        </div>
+        <button class="btn-primary" id="btn-resume-learning" style="margin-top: 18px; padding: 12px 28px; font-size: 15px;">
+          <span>▶</span>
+          <span>Resume Interactive Lesson</span>
+        </button>
+      </div>
+
+      <div class="card-header">
+        <h2 class="card-title">10-Module Skill Path Catalog</h2>
+      </div>
+
+      <div class="module-cards-grid" id="dashboard-modules-list">
+        <!-- Populated by JS -->
+      </div>
+    </main>
+
+    <!-- AI Assistant Modal -->
+    <div class="cc-drawer-overlay" id="ai-modal-overlay"></div>
+    <aside class="cc-drawer" id="ai-modal-drawer" style="right: 0; left: auto; transform: translateX(100%);">
+      <div class="cc-drawer-header">
+        <div style="font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px;">
+          <span>✨</span>
+          <span>AI Learning Assistant</span>
+        </div>
+        <button class="cc-drawer-close-btn" id="btn-close-ai">✕</button>
+      </div>
+      <div class="cc-drawer-content" style="padding: 20px;">
+        <div class="glass-card" style="padding: 16px; margin-bottom: 16px; background: rgba(0, 242, 254, 0.08); border-color: rgba(0, 242, 254, 0.3);">
+          <div style="font-weight: 700; color: #00f2fe; margin-bottom: 6px;">Active Step Context:</div>
+          <div id="ai-step-context-title" style="font-size: 13.5px; color: #f8fafc;"></div>
+        </div>
+        <div id="ai-hint-suggestions" style="margin-bottom: 20px;"></div>
+        <div style="font-size: 13px; color: #94a3b8; line-height: 1.6;">
+          💡 <strong>Pro-Tip:</strong> The AI Assistant checks your Big-O bounds and verifies edge cases before you hit Run!
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
