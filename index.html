@@ -3,244 +3,295 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ALGOVERSE - Skill Path: Pass the Technical Interview with Python & C++</title>
-  <meta name="description" content="Learn data structures and algorithms from scratch in Codecademy interactive format. Climb AtCoder and crack Amazon & Microsoft interviews.">
+  <title>CP Sensei — AI-Powered Competitive Programming Tutor</title>
+  <meta name="description" content="Master competitive programming with an AI tutor that builds your intuition step by step. In-browser Python execution, visual explanations, and adaptive learning.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- KaTeX for math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Marked.js for markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+
+  <!-- App Styles -->
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="codemirror/codemirror.min.css">
-  <link rel="stylesheet" href="codemirror/material-darker.min.css">
-  <script src="marked.min.js"></script>
-  <script src="codemirror/codemirror.min.js"></script>
-  <script src="codemirror/python.min.js"></script>
-  <script src="codemirror/clike.min.js"></script>
-  <script src="codemirror/closebrackets.min.js"></script>
-  <script src="codemirror/matchbrackets.min.js"></script>
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 </head>
-<body class="cc-light-theme">
+<body>
   <div id="app">
-    <!-- Top Codecademy Header (Screenshot 1) -->
-    <header class="cc-header">
-      <div class="cc-header-left">
-        <div class="cc-logo-badge" id="btn-home-logo" title="Course Home">C_</div>
-        <div class="cc-module-nav-wrapper">
-          <button class="cc-lesson-title-btn" id="btn-toggle-syllabus" title="Open Syllabus Browser">
-            <span id="cc-header-module-title">Algorithmic Thinking</span>
-            <span class="cc-header-menu-icon">☰</span>
-          </button>
-          <div class="cc-progress-dashes" id="cc-header-dashes">
-            <!-- Populated by JS -->
-          </div>
+
+    <!-- ═══ Header ═══ -->
+    <header class="header" id="header">
+      <div class="header-left">
+        <div class="logo">
+          <span class="logo-icon">⚡</span>
+          <span>CP Sensei</span>
+        </div>
+        <div class="connection-dot" id="connectionDot" title="AI not connected"></div>
+      </div>
+
+      <div class="header-center">
+        <div class="topic-selector">
+          <span>📚</span>
+          <select id="topicSelect">
+            <option value="">Start a conversation...</option>
+            <option value="arrays">Arrays & Hashing</option>
+            <option value="two-pointers">Two Pointers</option>
+            <option value="sliding-window">Sliding Window</option>
+            <option value="binary-search">Binary Search</option>
+            <option value="stacks">Stacks & Queues</option>
+            <option value="trees">Trees & BFS/DFS</option>
+            <option value="graphs">Graphs</option>
+            <option value="dp">Dynamic Programming</option>
+            <option value="greedy">Greedy</option>
+            <option value="math">Math & Number Theory</option>
+            <option value="strings">String Algorithms</option>
+            <option value="segment-tree">Segment Trees & BIT</option>
+          </select>
         </div>
       </div>
 
-      <div class="cc-header-right">
-        <button class="btn-ai-assistant" id="btn-open-ai">
-          <span style="color: #60a5fa;">✦</span>
-          <span>Ask the AI Learning Assistant</span>
+      <div class="header-right">
+        <button class="icon-btn" id="progressBtn" title="Progress">
+          📊
         </button>
-        <button class="cc-header-link" id="btn-get-unstuck">
-          <span style="color: #10b981; margin-right: 5px; font-size: 8px;">●</span>
-          <span>Get Unstuck</span>
+        <button class="icon-btn" id="settingsBtn" title="Settings">
+          ⚙️
         </button>
-        <button class="cc-header-link" id="btn-toggle-tools">Tools</button>
-        <div class="cc-avatar-circle" title="User Profile">
-          <span style="font-size: 11px; font-weight: 700; color: #fff;">RP</span>
-        </div>
-        <button class="btn-cc-upgrade" id="btn-upgrade-plan">Upgrade plan</button>
-        <span class="cc-xp-pill" id="cc-xp-display">50 XP</span>
+        <button class="icon-btn" id="resetBtn" title="New Chat">
+          🔄
+        </button>
       </div>
     </header>
 
-    <!-- Codecademy Syllabus Browser Drawer (Screenshots 2, 3, 4) -->
-    <div class="cc-drawer-overlay" id="cc-drawer-overlay"></div>
-    <aside class="cc-drawer" id="cc-syllabus-drawer">
-      <div class="cc-drawer-header">
-        <button class="cc-drawer-back-btn" id="btn-drawer-back">
-          <span>‹</span>
-          <span id="drawer-back-label">All Modules</span>
-        </button>
-        <button class="cc-drawer-close-btn" id="btn-close-drawer" title="Close Syllabus Browser">✕</button>
-      </div>
+    <!-- ═══ Main Content ═══ -->
+    <div class="main-container" id="mainContainer">
 
-      <div class="cc-drawer-content" id="cc-drawer-body">
-        <!-- Dynamically rendered (All Modules or Module Details) -->
-      </div>
+      <!-- ─── Left Panel: Chat & Learning ─── -->
+      <div class="left-panel" id="leftPanel">
 
-      <div class="cc-drawer-footer">
-        <button class="btn-view-syllabus-page" id="btn-view-full-roadmap">View syllabus page</button>
-      </div>
-    </aside>
-
-    <!-- Main 3-Pane Interactive Learning Workspace (Screenshot 1) -->
-    <main class="cc-workspace" id="view-workspace">
-      <!-- Pane 1: Learn (Pure Crisp Editorial White) -->
-      <section class="cc-pane-learn">
-        <div class="cc-pane-header">
-          <span class="cc-learn-icon">📖</span>
-          <span>Learn</span>
-        </div>
-        <div class="cc-learn-body">
-          <div class="cc-learn-category" id="cc-learn-category">FOUNDATIONS</div>
-          <h1 class="cc-learn-title" id="cc-learn-title">Welcome to the Algorithmic Engine</h1>
-          <div class="cc-learn-time" id="cc-learn-time">3 min</div>
-          <div class="cc-learn-text" id="cc-learn-body"></div>
-
-          <!-- Instructions & Exercises Section -->
-          <div class="cc-instructions-box">
-            <div class="cc-instructions-header">
-              <h3 class="cc-instructions-title">Instructions</h3>
-              <span class="cc-instructions-pill">Checkpoints</span>
-            </div>
-            <div id="cc-tasks-container">
-              <!-- Checkpoint tasks populated by JS -->
+        <!-- Chat Messages -->
+        <div class="chat-area" id="chatArea">
+          <!-- Welcome Screen (shown initially) -->
+          <div class="welcome-screen" id="welcomeScreen">
+            <div class="welcome-icon">⚡</div>
+            <h1>Welcome to CP Sensei</h1>
+            <p>Your AI-powered competitive programming tutor. I'll build your intuition step by step — not just dump code. Pick a topic or ask me anything.</p>
+            <div class="welcome-topics" id="welcomeTopics">
+              <button class="welcome-topic" data-topic="I'm new to CP. Where should I start?">🌱 I'm a beginner</button>
+              <button class="welcome-topic" data-topic="Teach me the sliding window pattern">🪟 Sliding Window</button>
+              <button class="welcome-topic" data-topic="I want to learn dynamic programming from scratch">🧩 Dynamic Programming</button>
+              <button class="welcome-topic" data-topic="Help me understand binary search and when to use it">🔍 Binary Search</button>
+              <button class="welcome-topic" data-topic="Teach me graph algorithms - BFS and DFS">🕸️ Graphs</button>
+              <button class="welcome-topic" data-topic="I want to practice two pointer problems">👆 Two Pointers</button>
+              <button class="welcome-topic" data-topic="Explain monotonic stack with examples">📚 Monotonic Stack</button>
+              <button class="welcome-topic" data-topic="Help me solve this problem: given an array, find the maximum subarray sum">💡 Solve a Problem</button>
             </div>
           </div>
-        </div>
-      </section>
 
-      <!-- Pane 2: Code Editor (Dark Slate Navy) -->
-      <section class="cc-pane-editor">
-        <div class="cc-editor-tabbar">
-          <div class="cc-file-tab active" id="tab-lang-py">
-            <span class="cc-tab-close">✕</span>
-            <span id="cc-editor-filename">script.py</span>
-          </div>
-          <div class="cc-file-tab" id="tab-lang-cpp">
-            <span class="cc-tab-close">✕</span>
-            <span>solution.cpp</span>
-          </div>
-          <div style="flex: 1;"></div>
-          <button class="btn-icon" id="btn-editor-expand" title="Expand Editor">⤢</button>
+          <!-- Messages will be appended here -->
         </div>
-        <div class="cc-editor-body" id="editor-container">
-          <textarea id="cc-code-input" spellcheck="false"></textarea>
-        </div>
-        <div class="cc-editor-footer">
-          <button class="btn-cc-run" id="btn-cc-run">
-            <span>Run</span>
-          </button>
-          <div class="cc-editor-actions">
-            <button class="btn-icon" id="btn-copy-code" title="Copy Code">📋</button>
-            <button class="btn-icon" id="btn-reset-code" title="Reset Starter Code">↻</button>
+
+        <!-- Chat Input -->
+        <div class="chat-input-area" id="chatInputArea">
+          <div class="quick-actions" id="quickActions">
+            <button class="quick-action-btn" data-action="Can you explain that with a visual?">🎨 Show visual</button>
+            <button class="quick-action-btn" data-action="I'm stuck, give me a hint">💡 Hint</button>
+            <button class="quick-action-btn" data-action="I understand! Let's practice with a problem">✅ Practice</button>
+            <button class="quick-action-btn" data-action="Can you explain that more simply?">🔄 Simplify</button>
+            <button class="quick-action-btn" data-action="Let's try to improve the time complexity">⚡ Optimize</button>
+            <button class="quick-action-btn" data-action="Give me the next problem">➡️ Next</button>
+          </div>
+          <div class="chat-input-wrapper">
+            <textarea class="chat-input" id="chatInput" placeholder="Ask me anything about competitive programming..." rows="1"></textarea>
+            <button class="send-btn" id="sendBtn" title="Send">▶</button>
           </div>
         </div>
-      </section>
+      </div>
 
-      <!-- Pane 3: Terminal Output (Pure Pitch Black) -->
-      <section class="cc-pane-terminal">
-        <div class="cc-terminal-header">
-          <div class="cc-terminal-dots">
-            <span class="cc-term-dot dot-red"></span>
-            <span class="cc-term-dot dot-yellow"></span>
-            <span class="cc-term-dot dot-green"></span>
+      <!-- ─── Divider ─── -->
+      <div class="panel-divider" id="panelDivider"></div>
+
+      <!-- ─── Right Panel: Editor ─── -->
+      <div class="right-panel" id="rightPanel">
+
+        <!-- Editor Header -->
+        <div class="editor-header">
+          <div class="editor-tabs">
+            <button class="editor-tab active" id="tabSolution">
+              <span class="dot"></span>
+              solution.py
+            </button>
           </div>
-          <span class="cc-term-title">bash - 80x24 (Python 3.11)</span>
-          <button class="btn-icon cc-term-clear" id="btn-clear-term" title="Clear Terminal">Clear</button>
+          <div class="editor-actions">
+            <button class="icon-btn" id="copyCodeBtn" title="Copy code">📋</button>
+            <button class="icon-btn" id="clearCodeBtn" title="Clear">🗑️</button>
+          </div>
         </div>
-        <div class="cc-terminal-body" id="cc-terminal-body">
-          <div class="term-line term-dim">ALGOVERSE Interactive Judge Terminal (Python 3.11)</div>
-          <div class="term-line term-dim">Loaded: script.py</div>
-          <div class="term-line term-dim">Click 'Run' or press Ctrl+Enter to execute.</div>
-        </div>
-      </section>
-    </main>
 
-    <!-- Bottom Navigation Footer (Screenshot 1) -->
-    <footer class="cc-footer-bar" id="cc-footer-bar">
-      <div class="cc-footer-left"></div>
-      <div class="cc-step-counter" id="cc-step-counter">1/8</div>
-      <div class="cc-footer-actions">
-        <button class="btn-cc-back" id="btn-step-back">Back</button>
-        <button class="btn-cc-next" id="btn-step-next">Next</button>
-      </div>
-    </footer>
+        <!-- Code Editor (CodeMirror mounted here) -->
+        <div class="editor-container" id="editorContainer"></div>
 
-    <!-- Full Course Overview Dashboard (When clicking Course Home / Full Roadmap) -->
-    <main class="page-container" id="view-dashboard" style="display: none;">
-      <div class="hero-card">
-        <div class="hero-tag">Skill Path Specification</div>
-        <h1 class="hero-title">Pass the Competitive Programming & Technical Interview with Python & C++</h1>
-        <p class="hero-desc">
-          Learn data structures and algorithms from scratch in Codecademy interactive format.
-          Master AtCoder contests and Amazon/Microsoft hiring loops.
-        </p>
-        <div class="stats-grid">
-          <div class="stat-item"><span class="stat-value">10</span><span class="stat-label">Modules</span></div>
-          <div class="stat-item"><span class="stat-value">45</span><span class="stat-label">Lessons</span></div>
-          <div class="stat-item"><span class="stat-value">8</span><span class="stat-label">Projects</span></div>
-          <div class="stat-item"><span class="stat-value">40</span><span class="stat-label">Quizzes</span></div>
-          <div class="stat-item"><span class="stat-value">162+</span><span class="stat-label">Qiita Articles</span></div>
-          <div class="stat-item"><span class="stat-value">34,820</span><span class="stat-label">Learners</span></div>
-        </div>
-        <button class="btn-primary" id="btn-resume-learning" style="margin-top: 18px; padding: 12px 28px; font-size: 15px;">
-          <span>▶</span>
-          <span>Resume Interactive Lesson</span>
-        </button>
-      </div>
+        <!-- Editor Bottom -->
+        <div class="editor-bottom" id="editorBottom">
+          <div class="editor-toolbar">
+            <div class="toolbar-left">
+              <button class="run-btn" id="runBtn">
+                <span>▶</span>
+                <span>Run</span>
+              </button>
+              <div class="loading-pyodide" id="pyodideLoading" style="display: none;">
+                <div class="spinner"></div>
+                <span>Loading Python...</span>
+              </div>
+            </div>
+            <div class="toolbar-right">
+              <div class="timer-display" id="timerDisplay">
+                <span>⏱️</span>
+                <span id="timerValue">00:00</span>
+              </div>
+            </div>
+          </div>
 
-      <div class="card-header">
-        <h2 class="card-title">10-Module Skill Path Catalog</h2>
-      </div>
-
-      <div class="module-cards-grid" id="dashboard-modules-list">
-        <!-- Populated by JS -->
-      </div>
-    </main>
-
-    <!-- AI Assistant Modal -->
-    <div class="cc-drawer-overlay" id="ai-modal-overlay"></div>
-    <aside class="cc-drawer" id="ai-modal-drawer" style="right: 0; left: auto; transform: translateX(100%);">
-      <div class="cc-drawer-header">
-        <div style="font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 8px;">
-          <span>✨</span>
-          <span>AI Learning Assistant</span>
-        </div>
-        <button class="cc-drawer-close-btn" id="btn-close-ai">✕</button>
-      </div>
-      <div class="cc-drawer-content" style="padding: 20px;">
-        <div class="glass-card" style="padding: 16px; margin-bottom: 16px; background: rgba(0, 242, 254, 0.08); border-color: rgba(0, 242, 254, 0.3);">
-          <div style="font-weight: 700; color: #00f2fe; margin-bottom: 6px;">Active Step Context:</div>
-          <div id="ai-step-context-title" style="font-size: 13.5px; color: #f8fafc;"></div>
-        </div>
-        <div id="ai-hint-suggestions" style="margin-bottom: 20px;"></div>
-        <div style="font-size: 13px; color: #94a3b8; line-height: 1.6;">
-          💡 <strong>Pro-Tip:</strong> The AI Assistant checks your Big-O bounds and verifies edge cases before you hit Run!
-        </div>
-      </div>
-    </aside>
-
-    <!-- Interactive Concept Quiz Modal (Codecademy Style) -->
-    <div class="cc-quiz-overlay" id="cc-quiz-overlay"></div>
-    <div class="cc-quiz-modal" id="cc-quiz-modal">
-      <div class="cc-quiz-header">
-        <div class="cc-quiz-header-left">
-          <div class="cc-quiz-pill" id="quiz-module-badge">MODULE 1 • QUIZ</div>
-          <h2 class="cc-quiz-title" id="quiz-title">Concept Quiz</h2>
-        </div>
-        <div class="cc-quiz-header-right">
-          <div class="cc-quiz-progress-text" id="quiz-progress-text">Question 1 of 5</div>
-          <button class="cc-quiz-close-btn" id="btn-close-quiz" title="Close Quiz">✕</button>
-        </div>
-      </div>
-      <div class="cc-quiz-progress-bar-container">
-        <div class="cc-quiz-progress-bar" id="quiz-progress-bar"></div>
-      </div>
-
-      <div class="cc-quiz-body" id="quiz-body">
-        <!-- Question & options rendered dynamically by JS -->
-      </div>
-
-      <div class="cc-quiz-footer" id="quiz-footer">
-        <div class="cc-quiz-footer-left">
-          <span class="cc-quiz-xp-tag" id="quiz-reward-xp">🏆 +20 XP on completion</span>
-        </div>
-        <div class="cc-quiz-footer-right">
-          <button class="btn-cc-submit-quiz" id="btn-quiz-action" disabled>Submit Answer</button>
+          <!-- IO Panels -->
+          <div class="io-panels">
+            <div class="io-panel">
+              <div class="io-panel-header">
+                <span>📥 Input (stdin)</span>
+                <button class="icon-btn" id="clearInputBtn" title="Clear" style="width:24px;height:24px;font-size:11px;">✕</button>
+              </div>
+              <div class="io-panel-content">
+                <textarea id="stdinInput" placeholder="Enter test input here..."></textarea>
+              </div>
+            </div>
+            <div class="io-panel">
+              <div class="io-panel-header">
+                <span>📤 Output</span>
+                <button class="icon-btn" id="clearOutputBtn" title="Clear" style="width:24px;height:24px;font-size:11px;">✕</button>
+              </div>
+              <div class="io-panel-content">
+                <div class="output-content" id="outputContent">Click "Run" to execute your code...</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- ═══ Footer ═══ -->
+    <footer class="footer" id="footer">
+      <div class="skill-bar-container" id="skillBars">
+        <!-- Dynamically populated -->
+      </div>
+      <div class="footer-right">
+        <div class="xp-display">
+          <span>⭐</span>
+          <span id="xpValue">0 XP</span>
+        </div>
+        <div class="streak-display">
+          <span>🔥</span>
+          <span id="streakValue">0 day streak</span>
+        </div>
+      </div>
+    </footer>
+
+    <!-- ═══ Progress Panel (slide-in) ═══ -->
+    <div class="progress-panel" id="progressPanel">
+      <h3>📊 Your Progress</h3>
+
+      <div class="stat-card">
+        <div class="stat-label">Problems Solved</div>
+        <div class="stat-value" id="statProblems" style="background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Total XP Earned</div>
+        <div class="stat-value" id="statXP" style="color: var(--accent-warning);">0</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Topics Explored</div>
+        <div class="stat-value" id="statTopics" style="color: var(--accent-secondary);">0</div>
+      </div>
+
+      <h3 style="margin-top: var(--space-lg);">🎯 Skill Breakdown</h3>
+      <div class="skill-list" id="skillList">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+
+    <!-- ═══ Settings Modal ═══ -->
+    <div class="modal-overlay" id="settingsModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>⚙️ AI Configuration</h2>
+          <button class="modal-close" id="settingsClose">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Provider Preset</label>
+            <div class="preset-buttons" id="presetButtons">
+              <button class="preset-btn" data-preset="ollama">🦙 Ollama</button>
+              <button class="preset-btn" data-preset="openai">🤖 OpenAI</button>
+              <button class="preset-btn" data-preset="gemini">✨ Gemini</button>
+              <button class="preset-btn" data-preset="openrouter">🌐 OpenRouter</button>
+              <button class="preset-btn" data-preset="custom">🔧 Custom</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">API Endpoint</label>
+            <input class="form-input" id="apiEndpoint" type="url" placeholder="http://localhost:11434/v1">
+            <span class="form-hint">The base URL for the OpenAI-compatible API</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Model Name</label>
+            <input class="form-input" id="apiModel" type="text" placeholder="llama3">
+            <span class="form-hint">e.g., llama3, gpt-4o-mini, gemini-1.5-flash</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">API Key (optional for local models)</label>
+            <input class="form-input" id="apiKey" type="password" placeholder="sk-...">
+            <span class="form-hint">Leave empty for Ollama. Required for cloud providers.</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Temperature</label>
+            <div style="display: flex; align-items: center; gap: var(--space-md);">
+              <input type="range" id="apiTemp" min="0" max="1" step="0.1" value="0.7" style="flex: 1;">
+              <span id="apiTempValue" style="font-family: var(--font-mono); font-size: 13px; color: var(--text-secondary);">0.7</span>
+            </div>
+          </div>
+
+          <div class="test-connection-result" id="testResult"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="testConnectionBtn">🔌 Test Connection</button>
+          <button class="btn-primary" id="saveSettingsBtn">💾 Save Settings</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <script src="data.js"></script>
+  <!-- ═══ Scripts ═══ -->
+  <script src="settings.js"></script>
+  <script src="python-runner.js"></script>
+  <script src="visualizer.js"></script>
+  <script src="problems.js"></script>
+  <script src="student-state.js"></script>
+  <script src="system-prompt.js"></script>
+  <script src="chat-engine.js"></script>
+  <script src="editor.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
