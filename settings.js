@@ -7,6 +7,13 @@ const Settings = (() => {
   const STORAGE_KEY = 'cpsensei_settings';
 
   const PRESETS = {
+    unsloth: {
+      name: 'Unsloth',
+      endpoint: 'http://localhost:8888/v1',
+      model: 'default',
+      apiKey: 'sk-unsloth-0dcbffd787cb1cd4e7a5ba2c2757980a',
+      temperature: 0.7,
+    },
     ollama: {
       name: 'Ollama',
       endpoint: 'http://localhost:11434/v1',
@@ -45,10 +52,10 @@ const Settings = (() => {
   };
 
   const defaults = {
-    preset: 'ollama',
-    endpoint: PRESETS.ollama.endpoint,
-    model: PRESETS.ollama.model,
-    apiKey: '',
+    preset: 'unsloth',
+    endpoint: PRESETS.unsloth.endpoint,
+    model: PRESETS.unsloth.model,
+    apiKey: PRESETS.unsloth.apiKey,
     temperature: 0.7,
     maxTokens: 4096,
   };
