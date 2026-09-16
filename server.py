@@ -23,6 +23,9 @@ class ProxyHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
         super().end_headers()
 
     def do_OPTIONS(self):
@@ -92,27 +95,40 @@ class ProxyHandler(http.server.SimpleHTTPRequestHandler):
                         chunk = resp.read(512)
                         if not chunk:
                             break
-                        self.wfile.write(chunk)
-                        self.wfile.flush()
+                        try:
+                            self.wfile.write(chunk)
+                            self.wfile.flush()
+                        except (BrokenPipeError, ConnectionResetError):
+                            break
 
+            except (BrokenPipeError, ConnectionResetError):
+                pass
             except urllib.error.HTTPError as e:
                 err_body = e.read()
-                self.send_response(e.code)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(err_body)
-
+                try:
+                    self.send_response(e.code)
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(err_body)
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
             except Exception as e:
-                self.send_response(502)
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({'error': f"Proxy request failed: {str(e)}"}).encode('utf-8'))
+                try:
+                    self.send_response(502)
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({'error': f"Proxy request failed: {str(e)}"}).encode('utf-8'))
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
 
         except Exception as e:
-            self.send_response(400)
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({'error': f"Bad proxy payload: {str(e)}"}).encode('utf-8'))
+            try:
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'error': f"Bad proxy payload: {str(e)}"}).encode('utf-8'))
+            except (BrokenPipeError, ConnectionResetError):
+                pass
 
 
 class ThreadingHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
