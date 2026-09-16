@@ -10,7 +10,7 @@ const Settings = (() => {
     unsloth: {
       name: 'Unsloth',
       endpoint: 'http://localhost:8888/v1',
-      model: 'default',
+      model: 'unsloth/LFM2.5-1.2B-Thinking-GGUF',
       apiKey: 'sk-unsloth-0dcbffd787cb1cd4e7a5ba2c2757980a',
       temperature: 0.7,
     },
@@ -64,9 +64,19 @@ const Settings = (() => {
 
   function load() {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        current = { ...defaults, ...JSON.parse(saved) };
+      const savedStr = localStorage.getItem(STORAGE_KEY);
+      if (savedStr) {
+        const saved = JSON.parse(savedStr);
+        // Auto-upgrade from outdated or empty ollama/unsloth configs
+        if (saved.preset === 'ollama' && !saved.apiKey) {
+          current = { ...defaults };
+          save(current);
+        } else if (saved.preset === 'unsloth' && (saved.model === 'default' || !saved.apiKey || !saved.model)) {
+          current = { ...defaults, ...saved, model: PRESETS.unsloth.model, apiKey: PRESETS.unsloth.apiKey };
+          save(current);
+        } else {
+          current = { ...defaults, ...saved };
+        }
       }
     } catch (e) {
       console.warn('Settings: failed to load', e);
@@ -94,8 +104,8 @@ const Settings = (() => {
     current.preset = presetName;
     current.endpoint = preset.endpoint;
     current.model = preset.model;
-    if (presetName !== 'custom') {
-      // Don't overwrite apiKey when switching presets
+    if (preset.apiKey) {
+      current.apiKey = preset.apiKey;
     }
     current.temperature = preset.temperature;
     return current;
@@ -107,22 +117,36 @@ const Settings = (() => {
       return { success: false, error: 'No endpoint configured' };
     }
 
-    try {
-      const headers = { 'Content-Type': 'application/json' };
-      if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+    const testPayload = {
+      model,
+      messages: [{ role: 'user', content: 'Say "connected" in one word.' }],
+      max_tokens: 10,
+      temperature: 0,
+    };
+    const headers = { 'Content-Type': 'application/json' };
+    if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+    const url = `${endpoint.replace(/\/+$/, '')}/chat/completions`;
 
-      const url = `${endpoint.replace(/\/+$/, '')}/chat/completions`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model,
-          messages: [{ role: 'user', content: 'Say "connected" in one word.' }],
-          max_tokens: 10,
-          temperature: 0,
-        }),
-        signal: AbortSignal.timeout(10000),
-      });
+    try {
+      let res;
+      // Try local proxy first for localhost/127.0.0.1 to avoid browser CORS issues
+      if (url.includes(':8888') || url.includes('localhost') || url.includes('127.0.0.1')) {
+        res = await fetch('/api/proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, headers, body: testPayload }),
+          signal: AbortSignal.timeout(10000),
+        }).catch(() => null);
+      }
+
+      if (!res || !res.ok) {
+        res = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(testPayload),
+          signal: AbortSignal.timeout(10000),
+        });
+      }
 
       if (!res.ok) {
         const errorText = await res.text().catch(() => 'Unknown error');
@@ -131,7 +155,7 @@ const Settings = (() => {
 
       const data = await res.json();
       const reply = data.choices?.[0]?.message?.content || '';
-      return { success: true, reply: reply.trim() };
+      return { success: true, reply: reply.replace(/<think>[\s\S]*?<\/think>/g, '').trim() };
     } catch (e) {
       return { success: false, error: e.message || 'Connection failed' };
     }

@@ -461,17 +461,22 @@
   function renderErrorMessage(error) {
     const msg = document.createElement('div');
     msg.className = 'message';
+    const cfg = Settings.get();
     msg.innerHTML = `
       <div class="message-avatar ai" style="background: linear-gradient(135deg, #ef4444, #f97316);">⚠️</div>
       <div class="message-content ai" style="border-color: rgba(239,68,68,0.2); background: rgba(239,68,68,0.05);">
         <p><strong>Connection Error</strong></p>
         <p>${escapeHtml(error)}</p>
         <p style="color: var(--text-muted); font-size: 12px; margin-top: 8px;">
-          💡 Click <strong>⚙️ Settings</strong> to configure your AI provider. 
-          <a href="https://ollama.ai" target="_blank" style="color: var(--accent-secondary-light);">Ollama</a> is free and runs locally.
+          Current Provider: <strong>${escapeHtml(cfg.preset || 'custom')}</strong> (${escapeHtml(cfg.endpoint || 'no endpoint')})<br>
+          💡 Click <button class="btn btn-secondary btn-sm" id="errorOpenSettingsBtn" style="padding: 2px 8px; font-size: 11px; margin-left: 4px;">⚙️ Open Settings</button> to check your model and key.
         </p>
       </div>
     `;
+    const openBtn = msg.querySelector('#errorOpenSettingsBtn');
+    if (openBtn) {
+      openBtn.addEventListener('click', openSettingsModal);
+    }
     els.chatArea.appendChild(msg);
   }
 

@@ -58,6 +58,49 @@ const ChatEngine = (() => {
     return messages;
   }
 
+  function stripThinking(text) {
+    if (!text) return '';
+    let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, '');
+    if (cleaned.includes('<think>')) {
+      cleaned = cleaned.replace(/<think>[\s\S]*/gi, '');
+    }
+    return cleaned.trimStart();
+  }
+
+  async function executeFetch(url, headers, body, signal) {
+    const isLocal = url.includes(':8888') || url.includes('localhost') || url.includes('127.0.0.1');
+    if (isLocal) {
+      try {
+        const proxyRes = await fetch('/api/proxy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, headers, body }),
+          signal,
+        });
+        if (proxyRes.ok) return proxyRes;
+      } catch (err) {
+        console.warn('Proxy fetch attempt failed, trying direct:', err);
+      }
+    }
+
+    try {
+      return await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal,
+      });
+    } catch (err) {
+      // Fallback to proxy on CORS or fetch error
+      return await fetch('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, headers, body }),
+        signal,
+      });
+    }
+  }
+
   async function sendMessage(userMessage, onToken, onComplete, onError) {
     if (isStreaming) {
       if (abortController) abortController.abort();
@@ -91,13 +134,10 @@ const ChatEngine = (() => {
       stream: true,
     };
 
+    let fullResponse = '';
+
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-        signal: abortController.signal,
-      });
+      const response = await executeFetch(url, headers, body, abortController.signal);
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => '');
@@ -107,7 +147,6 @@ const ChatEngine = (() => {
       // Stream SSE response
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let fullResponse = '';
       let buffer = '';
 
       while (true) {
@@ -128,7 +167,8 @@ const ChatEngine = (() => {
             const delta = json.choices?.[0]?.delta?.content;
             if (delta) {
               fullResponse += delta;
-              onToken(delta, fullResponse);
+              const cleanText = stripThinking(fullResponse);
+              onToken(delta, cleanText || 'Thinking...');
             }
           } catch (e) {
             // Skip malformed SSE chunks
@@ -136,29 +176,32 @@ const ChatEngine = (() => {
         }
       }
 
-      // Add assistant response to history
-      addMessage('assistant', fullResponse);
+      const finalResponse = stripThinking(fullResponse) || fullResponse;
+      addMessage('assistant', finalResponse);
       isStreaming = false;
-      onComplete(fullResponse);
+      onComplete(finalResponse);
 
     } catch (e) {
       isStreaming = false;
       if (e.name === 'AbortError') {
-        onComplete(fullResponse || '(cancelled)');
+        const finalResponse = stripThinking(fullResponse) || '(cancelled)';
+        onComplete(finalResponse);
         return;
       }
 
       // Try non-streaming fallback
       try {
-        const fallbackResponse = await fetch(url, {
-          method: 'POST',
+        const fallbackResponse = await executeFetch(
+          url,
           headers,
-          body: JSON.stringify({ ...body, stream: false }),
-        });
+          { ...body, stream: false },
+          abortController.signal
+        );
 
         if (fallbackResponse.ok) {
           const data = await fallbackResponse.json();
-          const content = data.choices?.[0]?.message?.content || '';
+          const raw = data.choices?.[0]?.message?.content || '';
+          const content = stripThinking(raw) || raw;
           addMessage('assistant', content);
           onToken(content, content);
           onComplete(content);
