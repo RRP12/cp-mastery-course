@@ -207,6 +207,37 @@
         </div>
       </div>
     </aside>
+
+    <!-- Interactive Concept Quiz Modal (Codecademy Style) -->
+    <div class="cc-quiz-overlay" id="cc-quiz-overlay"></div>
+    <div class="cc-quiz-modal" id="cc-quiz-modal">
+      <div class="cc-quiz-header">
+        <div class="cc-quiz-header-left">
+          <div class="cc-quiz-pill" id="quiz-module-badge">MODULE 1 • QUIZ</div>
+          <h2 class="cc-quiz-title" id="quiz-title">Concept Quiz</h2>
+        </div>
+        <div class="cc-quiz-header-right">
+          <div class="cc-quiz-progress-text" id="quiz-progress-text">Question 1 of 5</div>
+          <button class="cc-quiz-close-btn" id="btn-close-quiz" title="Close Quiz">✕</button>
+        </div>
+      </div>
+      <div class="cc-quiz-progress-bar-container">
+        <div class="cc-quiz-progress-bar" id="quiz-progress-bar"></div>
+      </div>
+
+      <div class="cc-quiz-body" id="quiz-body">
+        <!-- Question & options rendered dynamically by JS -->
+      </div>
+
+      <div class="cc-quiz-footer" id="quiz-footer">
+        <div class="cc-quiz-footer-left">
+          <span class="cc-quiz-xp-tag" id="quiz-reward-xp">🏆 +20 XP on completion</span>
+        </div>
+        <div class="cc-quiz-footer-right">
+          <button class="btn-cc-submit-quiz" id="btn-quiz-action" disabled>Submit Answer</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="data.js"></script>

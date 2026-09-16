@@ -214,7 +214,7 @@ var COURSE_DATA = {
           "title": "Module 1 Review & Summary",
           "category": "REVIEW & SUMMARY",
           "time": "4 min",
-          "learn": "### Module 1 Summary & Key Takeaways\n\nCongratulations on completing Module 1!\n\n> **Module 1 Master Checklist**:\n> - [x] **2.0-Second Limit**: ~10⁸ operations/sec → maximum 2 × 10⁸ CPU operations.\n> - [x] **Universal Constraint Matrix**: Bounds on N ($10, 20, 500, 2000, 2 \\times 10^5, 10^{18}$) directly dictate the optimal algorithm family.\n> - [x] **Zero-WA Pre-Flight Shield**: 6 critical checks (overflow, 0/1 indexing, safe modulo subtraction, $N=1$, heaps, connectivity).\n> - [x] **Bitwise XOR Invariants**: $x \\oplus x = 0$ and $x \\oplus 0 = x$ for $O(1)$ space pairing and missing element detection.\n\nProceed to the **Concept Quiz** to test your knowledge and claim **20 XP**!",
+          "learn": "### Module 1 Summary & Key Takeaways\n\nCongratulations on completing Module 1!\n\n> **Module 1 Master Checklist**:\n> - [x] **2.0-Second Limit**: ~10⁸ operations/sec → maximum 2 × 10⁸ CPU operations.\n> - [x] **Universal Constraint Matrix**: Bounds on N ($10, 20, 500, 2000, 2 \\times 10^5, 10^{18}$) directly dictate the optimal algorithm family.\n> - [x] **Zero-WA Pre-Flight Shield**: 6 critical checks (overflow, 0/1 indexing, safe modulo subtraction, $N=1$, heaps, connectivity).\n> - [x] **Bitwise XOR Invariants**: $x \\oplus x = 0$ and $x \\oplus 0 = x$ for $O(1)$ space pairing and missing element detection.\n\n<div style=\"margin-top: 24px; padding: 20px; background: #fefce8; border: 1.5px solid #fde047; border-radius: 10px; text-align: center;\">\n  <div style=\"font-weight: 800; color: #854d0e; font-size: 16px; margin-bottom: 6px;\">Ready to test your mastery?</div>\n  <p style=\"color: #713f12; font-size: 13.5px; margin-bottom: 14px; line-height: 1.5;\">Take the 5-question Module 1 Concept Quiz to earn 20 XP and verify your understanding of Big-O, constraints, and Zero-WA shields.</p>\n  <button class=\"btn-primary\" id=\"btn-launch-concept-quiz\" style=\"background: #ffd600; color: #000; font-weight: 700; padding: 10px 24px; border-radius: 6px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;\">📝 Start Concept Quiz (+20 XP)</button>\n</div>",
           "scriptName": "review.py",
           "starterCode": "# Module 1 Review Complete\ndef get_review_status():\n    return \"Module 1 Completed: Ready for Quiz!\"\n\nprint(get_review_status())\n",
           "instructions": [
@@ -233,37 +233,59 @@ var COURSE_DATA = {
         "xp": 20,
         "questions": [
           {
-            "q": "On a standard 2.0-second online judge server, what is the maximum number of basic operations your algorithm can perform?",
+            "q": "An AtCoder problem specifies N = 2 × 10⁵ and M = 2 × 10⁵ with a 2.0-second time limit. Which of the following algorithm time complexities is guaranteed to cause Time Limit Exceeded (TLE)?",
             "options": [
-              "~ 2 × 10⁶ operations",
-              "~ 2 × 10⁸ operations",
-              "~ 2 × 10¹² operations",
-              "~ 2 × 10¹⁸ operations"
+              "O(N + M)",
+              "O(N log N)",
+              "O(N²)",
+              "O(N log M)"
+            ],
+            "answer": 2,
+            "explanation": "With N = 200,000, N² requires (2 × 10⁵)² = 4 × 10¹⁰ operations. Since online judges execute ~10⁸ ops/second, this takes 400 seconds, guaranteeing a TLE."
+          },
+          {
+            "q": "In C++, if A = 10⁹ and B = 10⁹, what happens when you compute int C = A * B;?",
+            "options": [
+              "C = 10¹⁸",
+              "Compilation error",
+              "Undefined behavior / 32-bit signed integer overflow resulting in an incorrect negative value",
+              "Program automatically promotes variable to long long"
+            ],
+            "answer": 2,
+            "explanation": "In C++, 32-bit signed int maxes out at 2³¹ - 1 ≈ 2.14 × 10⁹. The product 10¹⁸ silently overflows into negative numbers. Always use long long for accumulators!"
+          },
+          {
+            "q": "Why does sending debug output to sys.stderr in Python or std::cerr in C++ prevent Wrong Answer (WA) on online judges?",
+            "options": [
+              "The judge automatically intercepts and strips debug output",
+              "The judge evaluates only standard output (stdout), ignoring standard error (stderr) completely",
+              "The compiler removes cerr in release mode",
+              "stderr writes to local disk only"
             ],
             "answer": 1,
-            "explanation": "Judge servers execute ~10⁸ ops/second. With a 2.0s limit, target operations must stay under 2 × 10⁸."
+            "explanation": "Contest judges test your solution by comparing stdout against expected output files. Since stderr is not redirected to the test output comparator, you can leave stderr prints without getting WA."
+          },
+          {
+            "q": "What is the correct integer ceiling division formula for ⌈B / A⌉ when A, B > 0?",
+            "options": [
+              "B // A + 1",
+              "(B + A) // A",
+              "(B + A - 1) // A",
+              "int(math.ceil(B / A)) without float precision errors"
+            ],
+            "answer": 2,
+            "explanation": "Formula (B + A - 1) // A correctly handles exact multiples (e.g., 6 // 3 = 2 with (6+2)//3 = 2) and non-multiples without floating point rounding errors."
           },
           {
             "q": "Why is O(max(N, M)) asymptotically identical to O(N + M) for non-negative integers?",
             "options": [
               "Because max(N, M) is always equal to (N + M) / 2",
-              "Because max(N, M) <= N + M <= 2 * max(N, M), bounding it within constant factors",
+              "Because max(N, M) <= N + M <= 2 * max(N, M), bounding it tightly within constant factors",
               "Because M is assumed to be a constant 0",
               "It is not identical; O(N+M) is strictly larger"
             ],
             "answer": 1,
-            "explanation": "As shown by @NAVYSHUNTA: max(N,M) <= N+M <= 2*max(N,M). Both upper and lower bounds differ only by constant factors."
-          },
-          {
-            "q": "If a problem specifies N <= 2 * 10⁵, which algorithm family will cause a Time Limit Exceeded (TLE)?",
-            "options": [
-              "O(N log N) Sorting or Segment Tree",
-              "O(N) Two Pointers or Prefix Sums",
-              "O(N²) Nested 2-loop scan",
-              "O(N alpha(N)) Disjoint Set Union"
-            ],
-            "answer": 2,
-            "explanation": "(2 × 10⁵)² = 4 × 10¹⁰ operations, which takes ~400 seconds on a 10⁸ ops/sec CPU, far exceeding 2.0 seconds."
+            "explanation": "By the Sandwich Theorem: max(N, M) <= N + M <= 2 * max(N, M). Because the upper and lower bounds differ only by a constant factor of 2, O(max(N, M)) = O(N + M)."
           }
         ]
       }

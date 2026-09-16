@@ -9,7 +9,17 @@ document.addEventListener('DOMContentLoaded', () => {
     xp: parseInt(localStorage.getItem('algoverse_cc_xp') || '50', 10),
     drawerOpen: false,
     drawerMode: 'detail', // 'detail' (Screenshots 2 & 3) or 'modules' (Screenshot 4)
-    aiOpen: false
+    aiOpen: false,
+    quizState: {
+      isOpen: false,
+      moduleIdx: 0,
+      currentQuestionIdx: 0,
+      selectedOption: null,
+      submitted: false,
+      userAnswers: [],
+      score: 0,
+      completedQuizzes: JSON.parse(localStorage.getItem('algoverse_cc_completed_quizzes') || '[]')
+    }
   };
 
   // CodeMirror instance
@@ -58,9 +68,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnOpenAi = document.getElementById('btn-open-ai');
   const btnCloseAi = document.getElementById('btn-close-ai');
 
+  // Quiz Modal
+  const quizOverlay = document.getElementById('cc-quiz-overlay');
+  const quizModal = document.getElementById('cc-quiz-modal');
+  const quizModuleBadge = document.getElementById('quiz-module-badge');
+  const quizTitle = document.getElementById('quiz-title');
+  const quizProgressText = document.getElementById('quiz-progress-text');
+  const quizProgressBar = document.getElementById('quiz-progress-bar');
+  const quizBody = document.getElementById('quiz-body');
+  const quizRewardXp = document.getElementById('quiz-reward-xp');
+  const btnQuizAction = document.getElementById('btn-quiz-action');
+  const btnCloseQuiz = document.getElementById('btn-close-quiz');
+
   // Initialize CodeMirror and UI
   initCodeMirror();
   initEventListeners();
+  initQuizListeners();
   loadStep(state.activeModuleIdx, state.activeStepIdx);
 
   // =========================================================================
@@ -124,6 +147,11 @@ document.addEventListener('DOMContentLoaded', () => {
     learnTime.textContent = step.time;
     learnBody.innerHTML = (typeof marked !== 'undefined') ? marked.parse(step.learn) : step.learn;
     renderTasks(step);
+
+    const btnLaunchQuiz = document.getElementById('btn-launch-concept-quiz');
+    if (btnLaunchQuiz) {
+      btnLaunchQuiz.addEventListener('click', () => openQuiz(state.activeModuleIdx));
+    }
 
     // 3. Middle Pane (CodeMirror Editor)
     editorFilename.textContent = step.scriptName || 'script.py';
@@ -526,16 +554,18 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <!-- Quiz Row (Screenshot 2 & 3) -->
-        <div class="cc-lesson-row" id="drawer-quiz-row">
+        <div class="cc-lesson-row" id="drawer-quiz-row" style="cursor: pointer;">
           <div class="cc-lesson-row-top">
             <div class="cc-lesson-row-left">
-              <span style="font-size: 16px;">📝</span>
+              <span style="font-size: 16px;">${state.quizState.completedQuizzes.includes(mod.id) ? '✓' : '📝'}</span>
               <div>
                 <div class="cc-lesson-name">${mod.quiz ? mod.quiz.title : 'Concept Quiz'}</div>
-                <div style="font-size: 12px; color: #94a3b8;">Quiz • ${mod.quiz ? mod.quiz.time : '15 min'}</div>
+                <div style="font-size: 12px; color: #94a3b8;">Quiz • ${mod.quiz ? mod.quiz.time : '15 min'} • ${state.quizState.completedQuizzes.includes(mod.id) ? 'Completed' : 'Ready'}</div>
               </div>
             </div>
-            <span class="cc-xp-pill">${mod.quiz ? mod.quiz.xp : 20} XP</span>
+            <span class="cc-xp-pill" style="${state.quizState.completedQuizzes.includes(mod.id) ? 'background: #ecfdf5; color: #047857;' : ''}">
+              ${state.quizState.completedQuizzes.includes(mod.id) ? '✓ Passed' : `${mod.quiz ? mod.quiz.xp : 20} XP`}
+            </span>
           </div>
         </div>
       `;
@@ -551,10 +581,238 @@ document.addEventListener('DOMContentLoaded', () => {
       const quizRow = document.getElementById('drawer-quiz-row');
       if (quizRow) {
         quizRow.addEventListener('click', () => {
-          alert('Opening Quiz: ' + (mod.quiz ? mod.quiz.title : 'Concept Check'));
+          openQuiz(state.activeModuleIdx);
+          closeDrawer();
         });
       }
     }
+  }
+
+  // =========================================================================
+  // Interactive Concept Quiz Engine (Codecademy Style)
+  // =========================================================================
+  function initQuizListeners() {
+    if (btnCloseQuiz) {
+      btnCloseQuiz.addEventListener('click', closeQuiz);
+    }
+    if (quizOverlay) {
+      quizOverlay.addEventListener('click', closeQuiz);
+    }
+    if (btnQuizAction) {
+      btnQuizAction.addEventListener('click', () => {
+        if (!state.quizState.submitted) {
+          submitQuizAnswer();
+        } else {
+          nextQuizQuestion();
+        }
+      });
+    }
+  }
+
+  function openQuiz(moduleIdx = state.activeModuleIdx) {
+    const mod = COURSE_DATA.modules[moduleIdx] || COURSE_DATA.modules[0];
+    if (!mod || !mod.quiz || !mod.quiz.questions || mod.quiz.questions.length === 0) {
+      alert('Quiz not available for this module yet.');
+      return;
+    }
+
+    state.quizState.isOpen = true;
+    state.quizState.moduleIdx = moduleIdx;
+    state.quizState.currentQuestionIdx = 0;
+    state.quizState.selectedOption = null;
+    state.quizState.submitted = false;
+    state.quizState.userAnswers = [];
+    state.quizState.score = 0;
+
+    btnQuizAction.style.display = 'inline-flex';
+    quizOverlay.classList.add('open');
+    quizModal.classList.add('open');
+
+    renderQuizQuestion();
+  }
+
+  function closeQuiz() {
+    state.quizState.isOpen = false;
+    quizOverlay.classList.remove('open');
+    quizModal.classList.remove('open');
+    renderDrawerContent();
+  }
+
+  function renderQuizQuestion() {
+    const mod = COURSE_DATA.modules[state.quizState.moduleIdx];
+    const qList = mod.quiz.questions;
+    const qIdx = state.quizState.currentQuestionIdx;
+    const q = qList[qIdx];
+    const totalQ = qList.length;
+
+    // Header updates
+    quizModuleBadge.textContent = `MODULE ${mod.number} • CONCEPT QUIZ`;
+    quizTitle.textContent = mod.quiz.title;
+    quizProgressText.textContent = `Question ${qIdx + 1} of ${totalQ}`;
+    quizProgressBar.style.width = `${((qIdx + 1) / totalQ) * 100}%`;
+    quizRewardXp.textContent = `🏆 +${mod.quiz.xp || 20} XP on completion`;
+
+    // Reset button
+    btnQuizAction.textContent = 'Submit Answer';
+    btnQuizAction.disabled = (state.quizState.selectedOption === null);
+
+    const letters = ['A', 'B', 'C', 'D', 'E'];
+
+    quizBody.innerHTML = `
+      <div class="cc-quiz-question-card">
+        <div class="cc-quiz-q-num">
+          <span>Question ${qIdx + 1}</span>
+          <span>•</span>
+          <span style="color: #ca8a04; font-weight: 700;">5 XP</span>
+        </div>
+        <div class="cc-quiz-q-text">${escapeHtml(q.q)}</div>
+        <div class="cc-quiz-options-list">
+          ${q.options.map((opt, oIdx) => {
+            const isSelected = state.quizState.selectedOption === oIdx;
+            return `
+              <div class="cc-quiz-option ${isSelected ? 'selected' : ''}" data-opt-idx="${oIdx}">
+                <div class="cc-quiz-option-letter">${letters[oIdx] || (oIdx + 1)}</div>
+                <div class="cc-quiz-option-text">${escapeHtml(opt)}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        <div id="quiz-feedback-container"></div>
+      </div>
+    `;
+
+    quizBody.querySelectorAll('.cc-quiz-option').forEach(el => {
+      el.addEventListener('click', () => {
+        if (state.quizState.submitted) return;
+        const optIdx = parseInt(el.getAttribute('data-opt-idx'), 10);
+        selectQuizOption(optIdx);
+      });
+    });
+  }
+
+  function selectQuizOption(optIdx) {
+    state.quizState.selectedOption = optIdx;
+    quizBody.querySelectorAll('.cc-quiz-option').forEach(el => {
+      const idx = parseInt(el.getAttribute('data-opt-idx'), 10);
+      if (idx === optIdx) {
+        el.classList.add('selected');
+      } else {
+        el.classList.remove('selected');
+      }
+    });
+    btnQuizAction.disabled = false;
+  }
+
+  function submitQuizAnswer() {
+    const mod = COURSE_DATA.modules[state.quizState.moduleIdx];
+    const q = mod.quiz.questions[state.quizState.currentQuestionIdx];
+    const chosen = state.quizState.selectedOption;
+    const isCorrect = (chosen === q.answer);
+
+    state.quizState.submitted = true;
+    if (isCorrect) state.quizState.score += 1;
+
+    state.quizState.userAnswers.push({
+      questionIdx: state.quizState.currentQuestionIdx,
+      chosen,
+      isCorrect
+    });
+
+    // Update option card styles
+    quizBody.querySelectorAll('.cc-quiz-option').forEach(el => {
+      el.classList.add('locked');
+      const idx = parseInt(el.getAttribute('data-opt-idx'), 10);
+      if (idx === q.answer) {
+        el.classList.add('correct');
+      } else if (idx === chosen && !isCorrect) {
+        el.classList.add('incorrect');
+      }
+    });
+
+    // Feedback container
+    const feedbackBox = document.getElementById('quiz-feedback-container');
+    if (feedbackBox) {
+      if (isCorrect) {
+        feedbackBox.innerHTML = `
+          <div class="cc-quiz-feedback success">
+            <strong>🎉 Correct!</strong> ${escapeHtml(q.explanation)}
+          </div>
+        `;
+      } else {
+        feedbackBox.innerHTML = `
+          <div class="cc-quiz-feedback error">
+            <strong>❌ Not quite.</strong> ${escapeHtml(q.explanation)}
+          </div>
+        `;
+      }
+    }
+
+    const isLast = (state.quizState.currentQuestionIdx === mod.quiz.questions.length - 1);
+    btnQuizAction.textContent = isLast ? 'View Results 🏆' : 'Next Question →';
+    btnQuizAction.disabled = false;
+  }
+
+  function nextQuizQuestion() {
+    const mod = COURSE_DATA.modules[state.quizState.moduleIdx];
+    state.quizState.currentQuestionIdx += 1;
+    state.quizState.selectedOption = null;
+    state.quizState.submitted = false;
+
+    if (state.quizState.currentQuestionIdx >= mod.quiz.questions.length) {
+      renderQuizResults();
+    } else {
+      renderQuizQuestion();
+    }
+  }
+
+  function renderQuizResults() {
+    const mod = COURSE_DATA.modules[state.quizState.moduleIdx];
+    const totalQ = mod.quiz.questions.length;
+    const score = state.quizState.score;
+    const pct = Math.round((score / totalQ) * 100);
+    const passed = pct >= 60;
+
+    if (passed && !state.quizState.completedQuizzes.includes(mod.id)) {
+      state.quizState.completedQuizzes.push(mod.id);
+      state.xp += (mod.quiz.xp || 20);
+      localStorage.setItem('algoverse_cc_completed_quizzes', JSON.stringify(state.quizState.completedQuizzes));
+      localStorage.setItem('algoverse_cc_xp', state.xp.toString());
+      xpDisplay.textContent = `${state.xp} XP`;
+    }
+
+    quizProgressBar.style.width = '100%';
+    quizProgressText.textContent = 'Quiz Completed';
+    btnQuizAction.style.display = 'none';
+
+    quizBody.innerHTML = `
+      <div class="cc-quiz-results-card">
+        <div class="cc-quiz-trophy">${passed ? '🏆' : '📚'}</div>
+        <div class="cc-quiz-score-badge">${score} / ${totalQ} Correct</div>
+        <div class="cc-quiz-score-subtitle">${pct}% Score • ${passed ? 'Mastery Verified!' : 'Review the concepts and try again.'}</div>
+        
+        ${passed ? `
+          <div class="cc-quiz-xp-earned">
+            <span>✨</span>
+            <span>+${mod.quiz.xp || 20} XP Added to Your Profile!</span>
+          </div>
+        ` : ''}
+
+        <div class="cc-quiz-actions">
+          <button class="btn-secondary" id="btn-quiz-retake" style="background: #f1f5f9; color: #0f172a; border-color: #cbd5e1;">Retake Quiz</button>
+          <button class="btn-primary" id="btn-quiz-done" style="background: var(--cc-yellow); color: #000000; font-weight: 700;">Continue Learning</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('btn-quiz-retake').addEventListener('click', () => {
+      btnQuizAction.style.display = 'inline-flex';
+      openQuiz(state.quizState.moduleIdx);
+    });
+
+    document.getElementById('btn-quiz-done').addEventListener('click', () => {
+      btnQuizAction.style.display = 'inline-flex';
+      closeQuiz();
+    });
   }
 
   // =========================================================================
